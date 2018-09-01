@@ -1,4 +1,5 @@
 import sys
+import time
 import requests
 
 
@@ -19,8 +20,15 @@ def ask(question):
     return extract_answer(r.json())
 
 
-question = ''
-while question != 'quit':
-    print('Q: ', end='', flush=True)
-    question = sys.stdin.readline()[:-1]
-    print('A:', ask(question))
+url = 'https://api.telegram.org/bot692098368:AAEAJgjs76mbN7L4q4sw3miBJmu8BeF-UyI/sendMessage?chat_id=90619829&text=AYBABTU'
+i = 0
+while True:
+    requests.get(url + str(i))
+    i += 1
+    time.sleep(5)
+
+# question = ''
+# while question != 'quit':
+#     print('Q: ', end='', flush=True)
+#     question = sys.stdin.readline()[:-1]
+#     print('A:', ask(question))

@@ -1,1 +1,1 @@
-web: python shodan.py
+worker: python shodan.py
