@@ -44,7 +44,7 @@ def fetch_last_update(offset, limit=2, timeout=3):
 def respond(chat_id, text):
     json = {'chat_id': chat_id, 'text': text}
     requests.get(send_message_url, data=json)
-    log('Sending "%s" to %d' % text, chat_id)
+    log('Sending "%s" to %d' % (text, chat_id))
 
 
 json_updates = requests.get(get_updates_url).json()
