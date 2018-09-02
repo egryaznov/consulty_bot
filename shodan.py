@@ -13,7 +13,7 @@ qna_url = 'https://shodanapp.azurewebsites.net/qnamaker/knowledgebases/fc674829-
 def log(message):
     print(message)
     timestamp = datetime.datetime.now()
-    logfile.writelines([timestamp, message, '\n'])
+    logfile.writelines(['[', str(timestamp), '] ', str(message), '\n'])
     logfile.flush()
 
 
@@ -22,7 +22,7 @@ def extract_answer(json):
     if len(answers) > 0:
         return answers[0]['answer']
     else:
-        return 'Internal error: ' + json
+        return 'Internal error: ' + str(json)
 
 
 def ask(question):
