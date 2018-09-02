@@ -37,7 +37,7 @@ def ask(question):
 def fetch_last_update(offset, limit=2, timeout=3):
     json = {'offset': offset, 'limit': limit, 'timeout' : timeout}
     json_updates = requests.get(get_updates_url, data=json).json()
-    log('fetching last update: ' + json_updates['ok'])
+    log('fetching last update: ' + str(json_updates['ok']))
     return json_updates['result'][-1]
 
 
