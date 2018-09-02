@@ -30,7 +30,7 @@ def ask(question):
     json_headers = {'Content-Type': 'application/json; charset=utf-8',
                     'Authorization': 'endpointKey efd34d6a-b60b-477f-b1af-91daa3af9013'}
     r = requests.post(qna_url, json=json_question, headers=json_headers)
-    log('Asked Shodan ' + r.json())
+    log('Asked Shodan ' + str(r.json()))
     return extract_answer(r.json())
 
 
