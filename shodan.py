@@ -2,17 +2,19 @@ import time
 import datetime
 import requests
 
+
+logfile = open('log.txt', 'a')
 main_url = 'https://api.telegram.org/bot692098368:AAEAJgjs76mbN7L4q4sw3miBJmu8BeF-UyI/'
 send_message_url = main_url + 'sendMessage'
 get_updates_url = main_url + 'getUpdates'
 qna_url = 'https://shodanapp.azurewebsites.net/qnamaker/knowledgebases/fc674829-efde-4a8f-b767-2d4349b8681e/generateAnswer'
-log = open('log.txt', 'a')
 
 
 def log(message):
+    print(message)
     timestamp = datetime.datetime.now()
-    log.writelines([timestamp, message, '\n'])
-    log.flush()
+    logfile.writelines([timestamp, message, '\n'])
+    logfile.flush()
 
 
 def extract_answer(json):
