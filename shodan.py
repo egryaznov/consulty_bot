@@ -36,7 +36,7 @@ def ask(question):
 
 def fetch_last_update(offset, limit=2, timeout=3):
     json = {'offset': offset, 'limit': limit, 'timeout' : timeout}
-    json_updates = requests.get(get_updates_url, data=json)
+    json_updates = requests.get(get_updates_url, data=json).json()
     log('fetching last update: ' + json_updates['ok'])
     return json_updates['result'][-1]
 
@@ -47,7 +47,7 @@ def respond(chat_id, text):
     log('Sending "%s" to %d' % text, chat_id)
 
 
-json_updates = requests.get(get_updates_url)
+json_updates = requests.get(get_updates_url).json()
 if json_updates['ok']:
     log('Fetched updates OK')
 else:
