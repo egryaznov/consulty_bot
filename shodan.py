@@ -35,25 +35,9 @@ def ask(question):
     return extract_answer(r.json())
 
 
-def download_kb_entries():
-    result = []
-    json_headers = {'Ocp-Apim-Subscription-Key' : 'dd5d9813819c4943aa2ff8f7a520455d'}
-    r = requests.get('https://westus.api.cognitive.microsoft.com/qnamaker/v4.0/knowledgebases/fc674829-efde-4a8f-b767-2d4349b8681e/prod/qna', headers=json_headers)
-    if r.ok:
-        kb_entries = r.json()['qnaDocuments']
-        for json_entry in kb_entries:
-            result.append(json_entry['questions'][0])
-    # we done here
-    return result
-
-
-def pluck(array, length):
-    return array[:length]
-
-
-def greetings(chat_id, n_questions=10):
+def greetings():
     greeting = 'Привет! Я твой юридический советник, спроси меня про Водный Кодекс РФ. Например:'
-    qna_pairs = pluck(download_kb_entries(), n_questions)
+    qna_pairs = ['Кто входит в состав бассейновых советов?', 'Что является гидрографической единицей?', 'В каких случаях может быть приостановлено водопользование?', 'Что должен содержать договор водопользования?', 'Кем ещё регулируются водные отношения?']
     qna_pairs.insert(0, greeting)
     respond(chat_id, '\n'.join(qna_pairs))
 
