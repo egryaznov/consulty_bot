@@ -4,7 +4,7 @@ import requests
 
 
 telegram_timeout_sec = 1
-logfile = open('log.txt', 'a')
+logfile = open('/app/log.txt', 'a')
 main_url = 'https://api.telegram.org/bot692098368:AAEAJgjs76mbN7L4q4sw3miBJmu8BeF-UyI/'
 send_message_url = main_url + 'sendMessage'
 get_updates_url = main_url + 'getUpdates'
@@ -74,7 +74,7 @@ while True:
         question = last_update['message']['text']
         # Answer to users question
         if question == '/start':
-            answer = greetings(chat_id)
+            answer = greetings()
         else:
             # Ask Microsoft QnA service
             answer = ask(question)
