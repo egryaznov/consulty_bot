@@ -13,7 +13,7 @@ send_message_url = main_url + 'sendMessage'
 get_updates_url = main_url + 'getUpdates'
 qna_url = 'https://shodanapp.azurewebsites.net/qnamaker/knowledgebases/fc674829-efde-4a8f-b767-2d4349b8681e/generateAnswer'
 MIN_WORD_LEN = 4
-WORDS_IN_KEY = 3
+WORDS_IN_KEY = sys.argv[1] if len(sys.argv) > 1 else 3
 stemmer      = SnowballStemmer('russian')
 print('stemmer loaded')
 corpus = json.load(open('nalkod.json', 'rt'))
@@ -148,6 +148,7 @@ while True:
     last_update = fetch_last_update(last_update_id)
     if last_update_id != last_update['update_id']:
         # we have a new message
+        log('Hurray! New message!')
         chat_id = last_update['message']['chat']['id']
         question = last_update['message']['text']
         # Answer to users question
