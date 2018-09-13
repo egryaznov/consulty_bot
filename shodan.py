@@ -83,7 +83,7 @@ def search_in_corpus(words, n):
         article_and_clause = union[0][1]
         article = article_and_clause[0]
         clause = article_and_clause[1]
-        return (corpus[article]['no'], clause[article]['clauses'[clause]['no']], corpus[article]['clauses'][clause]['text'])
+        return (corpus[article]['no'], clause[article]['clauses'][clause]['no'], corpus[article]['clauses'][clause]['text'])
     return (-1, -1, False)
 
 
