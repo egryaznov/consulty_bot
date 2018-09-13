@@ -13,7 +13,7 @@ send_message_url = main_url + 'sendMessage'
 get_updates_url = main_url + 'getUpdates'
 qna_url = 'https://shodanapp.azurewebsites.net/qnamaker/knowledgebases/fc674829-efde-4a8f-b767-2d4349b8681e/generateAnswer'
 MIN_WORD_LEN = 4
-WORDS_IN_KEY = sys.argv[1] if len(sys.argv) > 1 else 3
+WORDS_IN_KEY = int(sys.argv[1]) if len(sys.argv) > 1 else 3
 stemmer      = SnowballStemmer('russian')
 print('stemmer loaded')
 corpus = json.load(open('nalkod.json', 'rt'))
