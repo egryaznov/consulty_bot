@@ -158,7 +158,7 @@ while True:
             # Ask Microsoft QnA service
             answer = ask(question)
             if answer == 'No good match found in KB.':
-                words = [stemmer.stem(prune(word.lower())) for word in question.split[' ']]
+                words = [stemmer.stem(prune(word.lower())) for word in question.split(' ')]
                 respond(chat_id, 'Статья %s, Пункт %s:\n %s' % search_in_corpus(words, WORDS_IN_KEY))
             # Send answer to telegram
             respond(chat_id, answer)
