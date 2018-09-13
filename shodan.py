@@ -1,6 +1,9 @@
 import time
 import datetime
 import requests
+import sys
+import json
+from nltk.stem import SnowballStemmer
 
 
 telegram_timeout_sec = 1
@@ -9,6 +12,77 @@ main_url = 'https://api.telegram.org/bot692098368:AAEAJgjs76mbN7L4q4sw3miBJmu8Be
 send_message_url = main_url + 'sendMessage'
 get_updates_url = main_url + 'getUpdates'
 qna_url = 'https://shodanapp.azurewebsites.net/qnamaker/knowledgebases/fc674829-efde-4a8f-b767-2d4349b8681e/generateAnswer'
+MIN_WORD_LEN = 4
+WORDS_IN_KEY = 3
+stemmer      = SnowballStemmer('russian')
+print('stemmer loaded')
+corpus = json.load(open('nalkod.json', 'rt'))
+print('corpus loaded')
+vocab1 = json.load(open('vocab1.json', 'rt'))
+print('vocab1 loaded')
+vocab2 = json.load(open('vocab2.json', 'rt'))
+print('vocab2 loaded')
+vocab3 = json.load(open('vocab3.json', 'rt'))
+print('vocab3 loaded')
+
+
+def add_frequency(union, clauses):
+    clause_found = False
+    for clause in clauses:
+        for j in range(0, len(union)):
+            freq, u_clause = union[j]
+            if clause == u_clause:
+                union[j] = (freq + 1, u_clause)
+                clause_found = True
+        if not clause_found:
+            union.append((1, clause))
+
+
+def phrases(words, n):
+    phrases = []
+    first   = 0
+    last    = min(n, len(words))
+    while last <= len(words):
+        phrases.append(words[first:last])
+        first += 1
+        last  += 1
+    return phrases
+
+
+def prune(token):
+    letters = [char for char in token.lower() if char in 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя-']
+    return ''.join(letters)
+
+
+def get_vocab(n):
+    if n == 1:
+        return vocab1
+    elif n == 2:
+        return vocab2
+    elif n == 3:
+        return vocab3
+    return False
+
+
+def search_in_corpus(words, n):
+    if n == 0:
+        return ('', '', 'No answer')
+    #
+    stemmed_words = [stemmer.stem(prune(word)) for word in words]
+    bags = phrases(stemmed_words, n)
+    vocab = get_vocab(n)
+    union = []
+    for phrase in bags:
+        key = ' '.join(phrase)
+        if key in vocab:
+            add_frequency(union, vocab[key])
+    union.sort(key=lambda x: x[0], reverse=True)
+    if len(union) > 0:
+        article_and_clause = union[0][1]
+        article = article_and_clause[0]
+        clause = article_and_clause[1]
+        return (corpus[article]['no'], clause[article]['clauses'[clause]['no']], corpus[article]['clauses'][clause]['text'])
+    return (-1, -1, False)
 
 
 def log(message):
@@ -36,8 +110,12 @@ def ask(question):
 
 
 def greetings():
-    greeting = 'Привет! Я твой юридический советник, спроси меня про Водный Кодекс РФ. Например:'
-    qna_pairs = ['Кто входит в состав бассейновых советов?', 'Что является гидрографической единицей?', 'В каких случаях может быть приостановлено водопользование?', 'Что должен содержать договор водопользования?', 'Кем ещё регулируются водные отношения?']
+    greeting = 'Привет! Я твой юридический советник, спроси меня про Водный Кодекс РФ. Например:\n'
+    qna_pairs = ['* Кто входит в состав бассейновых советов?\n',
+                 '* Что является гидрографической единицей?\n',
+                 '* В каких случаях может быть приостановлено водопользование?\n',
+                 '* Что должен содержать договор водопользования?\n',
+                 '* Кем ещё регулируются водные отношения?\n']
     qna_pairs.insert(0, greeting)
     respond(chat_id, '\n'.join(qna_pairs))
 
@@ -78,5 +156,8 @@ while True:
         else:
             # Ask Microsoft QnA service
             answer = ask(question)
+            if answer == 'No good match found in KB.':
+                words = question = [stemmer.stem(prune(word.lower())) for word in question.split[' ']]
+                respond(chat_id, 'Статья %s, Пункт %s:\n %s' % search_in_corpus(words, WORDS_IN_KEY))
             # Send answer to telegram
             respond(chat_id, answer)
