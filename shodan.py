@@ -1,3 +1,4 @@
+# python shodan.py WORDS_IN_KEY MIN_PASSABLE_SCORE
 import time
 import datetime
 import requests
@@ -6,15 +7,16 @@ import json
 from nltk.stem import SnowballStemmer
 
 
+MIN_PASSABLE_SCORE   = int(sys.argv[2]) if len(sys.argv) > 2 else 75
+MIN_WORD_LEN         = 4
+WORDS_IN_KEY         = int(sys.argv[1]) if len(sys.argv) > 1 else 3
 telegram_timeout_sec = 1
-logfile = open('/app/log.txt', 'a')
-main_url = 'https://api.telegram.org/bot692098368:AAEAJgjs76mbN7L4q4sw3miBJmu8BeF-UyI/'
-send_message_url = main_url + 'sendMessage'
-get_updates_url = main_url + 'getUpdates'
-qna_url = 'https://shodanapp.azurewebsites.net/qnamaker/knowledgebases/fc674829-efde-4a8f-b767-2d4349b8681e/generateAnswer'
-MIN_WORD_LEN = 4
-WORDS_IN_KEY = int(sys.argv[1]) if len(sys.argv) > 1 else 3
-stemmer      = SnowballStemmer('russian')
+logfile              = open('/app/log.txt', 'a')
+main_url             = 'https://api.telegram.org/bot692098368:AAEAJgjs76mbN7L4q4sw3miBJmu8BeF-UyI/'
+send_message_url     = main_url + 'sendMessage'
+get_updates_url      = main_url + 'getUpdates'
+qna_url              = 'https://shodanapp.azurewebsites.net/qnamaker/knowledgebases/fc674829-efde-4a8f-b767-2d4349b8681e/generateAnswer'
+stemmer              = SnowballStemmer('russian')
 print('stemmer loaded')
 corpus = json.load(open('nalkod.json', 'rt'))
 print('corpus loaded')
@@ -95,7 +97,7 @@ def log(message):
 def extract_answer(json):
     answers = json['answers']
     if len(answers) > 0:
-        return answers[0]['answer']
+        return (answers[0]['answer'], answers[0]['score'])
     else:
         return 'Internal error: ' + str(json)
 
@@ -156,9 +158,10 @@ while True:
             answer = greetings()
         else:
             # Ask Microsoft QnA service
-            answer = ask(question)
-            if answer == 'No good match found in KB.':
+            answer, score = ask(question)
+            if answer == 'No good match found in KB.' or score < MIN_PASSABLE_SCORE:
                 words = [stemmer.stem(prune(word.lower())) for word in question.split(' ')]
                 respond(chat_id, 'Статья %s, Пункт %s:\n %s' % search_in_corpus(words, WORDS_IN_KEY))
-            # Send answer to telegram
-            respond(chat_id, answer)
+            else:
+                # Send answer to telegram
+                respond(chat_id, answer)
