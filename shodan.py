@@ -161,7 +161,12 @@ while True:
             answer, score = ask(question)
             if answer == 'No good match found in KB.' or score < MIN_PASSABLE_SCORE:
                 words = [stemmer.stem(prune(word.lower())) for word in question.split(' ')]
-                respond(chat_id, 'Статья %s, Пункт %s:\n %s' % search_in_corpus(words, WORDS_IN_KEY))
+                clause_content = False
+                n = WORDS_IN_KEY
+                while not clause_content:
+                    article, clause, clause_content = search_in_corpus(words, n)
+                    n -= 1
+                respond(chat_id, 'Статья %s, Пункт %s:\n %s' % (article, clause, clause_content))
             else:
                 # Send answer to telegram
                 respond(chat_id, answer)
