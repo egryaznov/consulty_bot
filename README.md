@@ -10,7 +10,9 @@
 2. Скачать все необходимые библиотеки командами:
 
 ```pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org nltk```
+
 ```pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org json```
+
 ```pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org requests```
 
 3. Запустить бота командой:
