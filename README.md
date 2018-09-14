@@ -6,7 +6,7 @@
 Бот интегрируется с QnA Maker Service от Microsoft'a для обработки вопросов на русском языке.
 
 # Инструкция по запуску проекта
-1. Установить третью версию Python: https://www.python.org/downloads/
+1. Установить третью версию Python: https://www.python.org/ftp/python/3.7.0/python-3.7.0.exe
 2. Скачать все необходимые библиотеки командами:
 
 ```pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org nltk```
