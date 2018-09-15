@@ -37,7 +37,7 @@ print('vocab3 loaded')
 
 def choose_the_best_clause(union, question):
     if USE_COSINE:
-        cos = Cosine()
+        cos = Cosine(1)
         article_and_clause_no = []
         max_cosine = 0
         for ref in union:
@@ -136,11 +136,9 @@ def ask(question):
 
 def greetings():
     greeting = 'Привет! Я твой юридический советник, спроси меня про Водный Кодекс РФ. Например:\n'
-    qna_pairs = ['* Кто входит в состав бассейновых советов?\n',
-                 '* Что является гидрографической единицей?\n',
-                 '* В каких случаях может быть приостановлено водопользование?\n',
-                 '* Что должен содержать договор водопользования?\n',
-                 '* Кем ещё регулируются водные отношения?\n']
+    qna_pairs = ['* Что устанавливает налоговый кодекс?\n',
+                 '* На что распространяется действие налогового кодекса?\n',
+                 '* Когда истекает срок, исчисляемый годами?\n']
     qna_pairs.insert(0, greeting)
     respond(chat_id, '\n'.join(qna_pairs))
 
