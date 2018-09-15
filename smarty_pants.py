@@ -1,3 +1,4 @@
+# python smarty_pants.py corpus.json
 import sys
 import json
 from nltk.stem import SnowballStemmer
@@ -5,9 +6,13 @@ from nltk.stem import SnowballStemmer
 
 MIN_WORD_LEN = 4
 WORDS_IN_KEY = 3
-stemmer      = SnowballStemmer('russian')
+if len(sys.argv) == 1:
+    print('Не указан путь к размеченному корпусу кодекса')
+    exit(1)
+stemmer = SnowballStemmer('russian')
+CORPUS_JSON_FILENAME = sys.argv[1]
 print('stemmer loaded')
-corpus = json.load(open('nalkod.json', 'rt'))
+corpus = json.load(open(CORPUS_JSON_FILENAME, 'rt'))
 print('corpus loaded')
 vocab1 = json.load(open('vocab1.json', 'rt'))
 print('vocab1 loaded')

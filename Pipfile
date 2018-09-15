@@ -8,6 +8,7 @@ verify_ssl = true
 
 requests="*"
 nltk="*"
+strsim="*"
 
 [requires]
 
