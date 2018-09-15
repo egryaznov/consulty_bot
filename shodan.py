@@ -1,5 +1,5 @@
-# python    0           1              2              3           4         5
-# python shodan.py WORDS_IN_KEY MIN_PASSABLE_SCORE USE_COSINE PROXY_HOST PROXY_PORT
+# python    0           1              2              3           4
+# python shodan.py WORDS_IN_KEY MIN_PASSABLE_SCORE USE_COSINE PROXY_URL
 import time
 import datetime
 import requests
@@ -13,6 +13,7 @@ def str_to_bool(text):
     return 'true' == text.lower()
 
 
+PROXY_URL            = sys.argv[4] if len(sys.argv) > 4 else ''
 MIN_PASSABLE_SCORE   = int(sys.argv[2]) if len(sys.argv) > 2 else 75
 MIN_WORD_LEN         = 4
 USE_COSINE           = str_to_bool(sys.args[3]) if len(sys.argv) > 3 else True
@@ -135,17 +136,20 @@ def ask(question):
 
 
 def greetings():
-    greeting = 'Привет! Я твой юридический советник, спроси меня про Водный Кодекс РФ. Например:\n'
-    qna_pairs = ['* Что устанавливает налоговый кодекс?\n',
-                 '* На что распространяется действие налогового кодекса?\n',
-                 '* Когда истекает срок, исчисляемый годами?\n']
+    greeting = 'Привет! Я твой юридический советник, спроси меня про Налоговый Кодекс РФ. Например:'
+    qna_pairs = ['* Что устанавливает налоговый кодекс?',
+                 '* На что распространяется действие налогового кодекса?',
+                 '* Когда истекает срок, исчисляемый годами?']
     qna_pairs.insert(0, greeting)
     respond(chat_id, '\n'.join(qna_pairs))
 
 
 def fetch_last_update(offset, limit=2, timeout=telegram_timeout_sec):
     json = {'offset': offset, 'limit': limit, 'timeout' : timeout}
-    json_updates = requests.get(get_updates_url, data=json).json()
+    if len(PROXY_URL) > 0:
+        json_updates = requests.get(get_updates_url, data=json, proxies={'https' : PROXY_URL}).json()
+    else:
+        json_updates = requests.get(get_updates_url, data=json).json()
     log('fetching last update: ' + str(json_updates['ok']))
     return json_updates['result'][-1]
 
@@ -172,6 +176,9 @@ while True:
     if last_update_id != last_update['update_id']:
         # we have a new message
         log('Hurray! New message!')
+        if 'message' not in last_update:
+            log('unknown type of response: ' + str(last_update))
+            continue
         chat_id = last_update['message']['chat']['id']
         question = last_update['message']['text']
         # Answer to users question
