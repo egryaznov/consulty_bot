@@ -1,14 +1,21 @@
-# python shodan.py WORDS_IN_KEY MIN_PASSABLE_SCORE
+# python    0           1              2              3           4         5
+# python shodan.py WORDS_IN_KEY MIN_PASSABLE_SCORE USE_COSINE PROXY_HOST PROXY_PORT
 import time
 import datetime
 import requests
 import sys
 import json
 from nltk.stem import SnowballStemmer
+from similarity.cosine import Cosine
+
+
+def str_to_bool(text):
+    return 'true' == text.lower()
 
 
 MIN_PASSABLE_SCORE   = int(sys.argv[2]) if len(sys.argv) > 2 else 75
 MIN_WORD_LEN         = 4
+USE_COSINE           = str_to_bool(sys.args[3]) if len(sys.argv) > 3 else True
 WORDS_IN_KEY         = int(sys.argv[1]) if len(sys.argv) > 1 else 3
 telegram_timeout_sec = 1
 logfile              = open('/app/log.txt', 'a')
@@ -26,6 +33,24 @@ vocab2 = json.load(open('vocab2.json', 'rt'))
 print('vocab2 loaded')
 vocab3 = json.load(open('vocab3.json', 'rt'))
 print('vocab3 loaded')
+
+
+def choose_the_best_clause(union, question):
+    if USE_COSINE:
+        cos = Cosine()
+        article_and_clause_no = []
+        max_cosine = 0
+        for ref in union:
+            article, clause = ref[1]
+            clause = corpus[article]['clauses'][clause]['text']
+            cur_cos = cos.similarity(clause, question)
+            if max_cosine < cur_cos:
+                max_cosine = cur_cos
+                article_and_clause_no = ref[1]
+        return article_and_clause_no
+    else:
+        union.sort(key=lambda x: x[0], reverse=True)
+        return union[0][1]
 
 
 def add_frequency(union, clauses):
@@ -66,11 +91,10 @@ def get_vocab(n):
     return False
 
 
-def search_in_corpus(words, n):
+def search_in_corpus(stemmed_words, question, n):
     if n == 0:
         return ('', '', 'No answer')
     #
-    stemmed_words = [stemmer.stem(prune(word)) for word in words]
     bags = phrases(stemmed_words, n)
     vocab = get_vocab(n)
     union = []
@@ -78,9 +102,8 @@ def search_in_corpus(words, n):
         key = ' '.join(phrase)
         if key in vocab:
             add_frequency(union, vocab[key])
-    union.sort(key=lambda x: x[0], reverse=True)
     if len(union) > 0:
-        article_and_clause = union[0][1]
+        article_and_clause = choose_the_best_clause(union, question)  # <-- HERE
         article = article_and_clause[0]
         clause = article_and_clause[1]
         return (corpus[article]['no'], corpus[article]['clauses'][clause]['no'], corpus[article]['clauses'][clause]['text'])
@@ -160,13 +183,16 @@ while True:
             # Ask Microsoft QnA service
             answer, score = ask(question)
             if answer == 'No good match found in KB.' or score < MIN_PASSABLE_SCORE:
-                words = [stemmer.stem(prune(word.lower())) for word in question.split(' ')]
+                stemmed_words = [stemmer.stem(prune(word.lower())) for word in question.split(' ')]
                 clause_content = False
                 n = WORDS_IN_KEY
                 while not clause_content:
-                    article, clause, clause_content = search_in_corpus(words, n)
+                    article, clause, clause_content = search_in_corpus(stemmed_words, question, n)
                     n -= 1
-                respond(chat_id, 'Статья %s, Пункт %s:\n %s' % (article, clause, clause_content))
+                if len(article) == 0:
+                    respond(chat_id, 'Я не могу Вам помочь в этом вопросе.')
+                else:
+                    respond(chat_id, 'Статья %s Пункт %s\n %s' % (article, clause, clause_content))
             else:
                 # Send answer to telegram
                 respond(chat_id, answer)
