@@ -9,15 +9,16 @@ from nltk.stem import SnowballStemmer
 from similarity.cosine import Cosine
 
 
+# Переводит строку 'true' или 'false' в булевое значение
 def str_to_bool(text):
     return 'true' == text.lower()
 
 
-PROXY_URL            = sys.argv[4] if len(sys.argv) > 4 else ''
-MIN_PASSABLE_SCORE   = int(sys.argv[2]) if len(sys.argv) > 2 else 75
-MIN_WORD_LEN         = 4
-USE_COSINE           = str_to_bool(sys.args[3]) if len(sys.argv) > 3 else True
-WORDS_IN_KEY         = int(sys.argv[1]) if len(sys.argv) > 1 else 3
+PROXY_URL            = sys.argv[4] if len(sys.argv) > 4 else ''  # Ссылка на прокси
+MIN_PASSABLE_SCORE   = int(sys.argv[2]) if len(sys.argv) > 2 else 75  # Наименьший допустимый счет ответа от QnA
+MIN_WORD_LEN         = 4  # наимешньшая допустимая длина токена
+USE_COSINE           = str_to_bool(sys.args[3]) if len(sys.argv) > 3 else True  # Использовать ли косинусный коэффицент для сравнения строк
+WORDS_IN_KEY         = int(sys.argv[1]) if len(sys.argv) > 1 else 3  # кол-во слов в одном ключе
 telegram_timeout_sec = 1
 logfile              = open('/app/log.txt', 'a')
 main_url             = 'https://api.telegram.org/bot692098368:AAEAJgjs76mbN7L4q4sw3miBJmu8BeF-UyI/'
@@ -36,6 +37,7 @@ vocab3 = json.load(open('vocab3.json', 'rt'))
 print('vocab3 loaded')
 
 
+# Выбирает наиболее похожий на вопрос пункт Кодекса
 def choose_the_best_clause(union, question):
     if USE_COSINE:
         cos = Cosine(1)
@@ -54,6 +56,7 @@ def choose_the_best_clause(union, question):
         return union[0][1]
 
 
+# Добавляет новый пункт Кодекса в список, из которого потом будет выбран наиболее похожий на вопрос пользователя
 def add_frequency(union, clauses):
     clause_found = False
     for clause in clauses:
@@ -66,6 +69,8 @@ def add_frequency(union, clauses):
             union.append((1, clause))
 
 
+# Возвращает список из k n-кортежей последовательных слов из массива words
+# Например: phrases(['Тут', 'был', 'Вася'], 2) = [['Тут', 'был'], ['был', 'Вася']]
 def phrases(words, n):
     phrases = []
     first   = 0
@@ -77,11 +82,13 @@ def phrases(words, n):
     return phrases
 
 
+# Удаляет из слова все символы, не являющиеся буквенными
 def prune(token):
     letters = [char for char in token.lower() if char in 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя-']
     return ''.join(letters)
 
 
+# Возвращает ассощиативный массив, который сопоставляет фразам из Кодекса номера их пунктов
 def get_vocab(n):
     if n == 1:
         return vocab1
@@ -92,6 +99,7 @@ def get_vocab(n):
     return False
 
 
+# Ищет наиболее подходящий под вопрос пункт Кодекса
 def search_in_corpus(stemmed_words, question, n):
     if n == 0:
         return ('', '', 'No answer')
@@ -111,6 +119,7 @@ def search_in_corpus(stemmed_words, question, n):
     return (-1, -1, False)
 
 
+# Логирует сообщение в файл и в консоль. Для отладки.
 def log(message):
     print(message)
     timestamp = datetime.datetime.now()
@@ -118,6 +127,7 @@ def log(message):
     logfile.flush()
 
 
+# Извлекает ответ из JSON, пришедшего от QnA maker'a
 def extract_answer(json):
     answers = json['answers']
     if len(answers) > 0:
@@ -126,6 +136,7 @@ def extract_answer(json):
         return 'Internal error: ' + str(json)
 
 
+# Задаёт вопрос QnA maker'у
 def ask(question):
     json_question = {'question': question, 'userId' : 'Default', 'isTest': True}
     json_headers = {'Content-Type': 'application/json; charset=utf-8',
@@ -135,6 +146,7 @@ def ask(question):
     return extract_answer(r.json())
 
 
+# Приветствует пользователя
 def greetings():
     greeting = 'Привет! Я твой юридический советник, спроси меня про Налоговый Кодекс РФ. Например:'
     qna_pairs = ['* Что устанавливает налоговый кодекс?',
@@ -144,6 +156,7 @@ def greetings():
     respond(chat_id, '\n'.join(qna_pairs))
 
 
+# Скачиваем последнее сообщение пользователя в телеграмме
 def fetch_last_update(offset, limit=2, timeout=telegram_timeout_sec):
     json = {'offset': offset, 'limit': limit, 'timeout' : timeout}
     if len(PROXY_URL) > 0:
@@ -154,6 +167,7 @@ def fetch_last_update(offset, limit=2, timeout=telegram_timeout_sec):
     return json_updates['result'][-1]
 
 
+# Отвечаем пользователю в телеграмме
 def respond(chat_id, text):
     json = {'chat_id': chat_id, 'text': text}
     requests.get(send_message_url, data=json)
@@ -188,12 +202,15 @@ while True:
             # Ask Microsoft QnA service
             answer, score = ask(question)
             if answer == 'No good match found in KB.' or score < MIN_PASSABLE_SCORE:
+                # Не нашли похожего вопроса в QnA maker'e, задействуем механизм ответа на неизвестный вопрос
                 stemmed_words = [stemmer.stem(prune(word.lower())) for word in question.split(' ')]
                 clause_content = False
                 n = WORDS_IN_KEY
+                # Ищем пункт в Кодексе, максимально похожий на вопрос пользователя
                 while not clause_content:
                     article, clause, clause_content = search_in_corpus(stemmed_words, question, n)
                     n -= 1
+                # Отвечаем соответственно
                 if len(article) == 0:
                     respond(chat_id, 'Я не могу Вам помочь в этом вопросе.')
                 else:
